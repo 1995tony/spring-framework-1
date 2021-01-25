@@ -1,13 +1,18 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
+        maven {url "https://jitpack.io"}
+        maven {url "https://plugins.gradle.org"}
+        mavenCentral()
+        jcenter()
+        maven{ url "https://maven.springframework.org/release"}
         maven { url 'https://repo.spring.io/plugins-release' }
     }
 }
 
 plugins {
     id "com.gradle.enterprise" version "3.2"
-    id "io.spring.gradle-enterprise-conventions" version "0.0.2"
+    id "io.spring.gradle-enterprise-conventions" version "0.0.4"
 }
 
 include "spring-aop"
