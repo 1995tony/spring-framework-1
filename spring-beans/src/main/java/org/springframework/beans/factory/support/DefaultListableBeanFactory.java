@@ -1253,13 +1253,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		InjectionPoint previousInjectionPoint = ConstructorResolver.setCurrentInjectionPoint(descriptor);
 		try {
+//			捷徑方式獲取對象實例
 			Object shortcut = descriptor.resolveShortcut(this);
 			if (shortcut != null) {
 				return shortcut;
 			}
 
 			Class<?> type = descriptor.getDependencyType();
+//			獲取 @Value 註解的 field
 			Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor);
+//			先判斷是否為 @Value 註解，若是舊解析然後 return
 			if (value != null) {
 				if (value instanceof String) {
 					String strVal = resolveEmbeddedValue((String) value);
@@ -1277,12 +1280,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							converter.convertIfNecessary(value, type, descriptor.getMethodParameter()));
 				}
 			}
-
+//			非其他 value, 那就進入到解析 bean 的過程
+//			先解析多重 bean, 若有值則返回
 			Object multipleBeans = resolveMultipleBeans(descriptor, beanName, autowiredBeanNames, typeConverter);
+//			不為空則返回
 			if (multipleBeans != null) {
 				return multipleBeans;
 			}
 
+//			找到候選的依賴注入對象
+//			再去匹配單個的 bean
 			Map<String, Object> matchingBeans = findAutowireCandidates(beanName, type, descriptor);
 			if (matchingBeans.isEmpty()) {
 				if (isRequired(descriptor)) {
@@ -1294,6 +1301,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			String autowiredBeanName;
 			Object instanceCandidate;
 
+//			匹配到多個，則會決策哪個會被依賴注入進來，優先級高或者被註解 @Pimary 註解的優先注入
 			if (matchingBeans.size() > 1) {
 				autowiredBeanName = determineAutowireCandidate(matchingBeans, descriptor);
 				if (autowiredBeanName == null) {
