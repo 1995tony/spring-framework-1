@@ -94,6 +94,7 @@ public class DelegatingFilterProxy extends GenericFilterBean {
 	private boolean targetFilterLifecycle = false;
 
 	@Nullable
+	// (1) 關鍵點
 	private volatile Filter delegate;
 
 	private final Object delegateMonitor = new Object();
@@ -236,6 +237,7 @@ public class DelegatingFilterProxy extends GenericFilterBean {
 		synchronized (this.delegateMonitor) {
 			if (this.delegate == null) {
 				// If no target bean name specified, use filter name.
+//				當 filter 配置時，如果沒有設置 targetBeanName, 則會直接根據 filter 名稱查找
 				if (this.targetBeanName == null) {
 					this.targetBeanName = getFilterName();
 				}
@@ -244,6 +246,7 @@ public class DelegatingFilterProxy extends GenericFilterBean {
 				// filter proxy, we'll have to resort to lazy initialization.
 				WebApplicationContext wac = findWebApplicationContext();
 				if (wac != null) {
+//					從 Spring 容器中獲取注入的 Filter 實現類
 					this.delegate = initDelegate(wac);
 				}
 			}
@@ -255,8 +258,10 @@ public class DelegatingFilterProxy extends GenericFilterBean {
 			throws ServletException, IOException {
 
 		// Lazily initialize the delegate if necessary.
+//		過濾器代理支持懶加載
 		Filter delegateToUse = this.delegate;
 		if (delegateToUse == null) {
+//			懶載入
 			synchronized (this.delegateMonitor) {
 				delegateToUse = this.delegate;
 				if (delegateToUse == null) {
@@ -272,6 +277,7 @@ public class DelegatingFilterProxy extends GenericFilterBean {
 		}
 
 		// Let the delegate perform the actual doFilter operation.
+//		(2) 讓代理過濾器執行實際的過濾行為
 		invokeDelegate(delegateToUse, request, response, filterChain);
 	}
 
@@ -338,6 +344,7 @@ public class DelegatingFilterProxy extends GenericFilterBean {
 	 * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
 	 */
 	protected Filter initDelegate(WebApplicationContext wac) throws ServletException {
+//		從 Spring 容器中獲取注入的 Filter 實現類
 		String targetBeanName = getTargetBeanName();
 		Assert.state(targetBeanName != null, "No target bean name set");
 		Filter delegate = wac.getBean(targetBeanName, Filter.class);
@@ -357,6 +364,7 @@ public class DelegatingFilterProxy extends GenericFilterBean {
 	 * @throws ServletException if thrown by the Filter
 	 * @throws IOException      if thrown by the Filter
 	 */
+//	調用代理過濾器
 	protected void invokeDelegate(
 			Filter delegate, ServletRequest request, ServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
