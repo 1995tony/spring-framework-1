@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.lang.Nullable;
 
+// 2021/12/09 Read
 /**
  * Miscellaneous {@link MimeType} utility methods.
  *
@@ -296,6 +297,7 @@ public abstract class MimeTypeUtils {
 			return Collections.emptyList();
 		}
 		List<String> tokens = new ArrayList<>();
+		// 是否在引號內
 		boolean inQuotes = false;
 		int startIndex = 0;
 		int i = 0;
@@ -423,10 +425,13 @@ public abstract class MimeTypeUtils {
 
 		private final int maxSize;
 
+		// 可同步雙向 queue
 		private final ConcurrentLinkedDeque<K> queue = new ConcurrentLinkedDeque<>();
 
-		private final ConcurrentHashMap<K, V> cache = new ConcurrentHashMap<>();
-
+		// 可非同步 HashMap
+		private final ConcurrentHashMap< K, V> cache = new ConcurrentHashMap<>();
+		// get 的時候 -> readLock().lock() finally readLock().unLock()
+		//
 		private final ReadWriteLock lock;
 
 		private final Function<K, V> generator;
@@ -443,12 +448,15 @@ public abstract class MimeTypeUtils {
 
 		public V get(K key) {
 			V cached = this.cache.get(key);
+			// 若 key 有結果值
 			if (cached != null) {
 				if (this.size < this.maxSize) {
 					return cached;
 				}
+				// 加上 read 鎖, 避免刪掉後, offer 前找不到
 				this.lock.readLock().lock();
 				try {
+					// 把原本順序在後面的優先度, 放到最後一個
 					if (this.queue.removeLastOccurrence(key)) {
 						this.queue.offer(key);
 					}
@@ -457,8 +465,10 @@ public abstract class MimeTypeUtils {
 					this.lock.readLock().unlock();
 				}
 			}
+			// 若 key 無結果值
 			this.lock.writeLock().lock();
 			try {
+				// 再試一次, 若友直接回傳
 				// Retrying in case of concurrent reads on the same key
 				cached = this.cache.get(key);
 				if (cached != null) {
@@ -467,16 +477,19 @@ public abstract class MimeTypeUtils {
 					}
 					return cached;
 				}
+				// 重新使用 genetator 取得 key 結果值
 				// Generate value first, to prevent size inconsistency
 				V value = this.generator.apply(key);
 				int cacheSize = this.size;
 				if (cacheSize == this.maxSize) {
+					// 刪除最少用的
 					K leastUsed = this.queue.poll();
 					if (leastUsed != null) {
 						this.cache.remove(leastUsed);
 						cacheSize--;
 					}
 				}
+				// 把現在這個放尾巴
 				this.queue.offer(key);
 				this.cache.put(key, value);
 				this.size = cacheSize + 1;
