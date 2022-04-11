@@ -78,6 +78,7 @@ final class SimpleStreamingClientHttpRequest extends AbstractClientHttpRequest {
 				if (contentLength >= 0) {
 					this.connection.setFixedLengthStreamingMode(contentLength);
 				} else {
+					// 用來設置 請求 output streaming 的 body 分塊大小, 預設1024?
 					this.connection.setChunkedStreamingMode(this.chunkSize);
 				}
 			}

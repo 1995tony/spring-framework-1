@@ -22,11 +22,13 @@ import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.http.HttpMethod;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.FileCopyUtils;
 
 /**
  * {@link ClientHttpRequestFactory} implementation that uses standard JDK facilities.
@@ -44,18 +46,23 @@ public class SimpleClientHttpRequestFactory implements ClientHttpRequestFactory,
 
 
 	@Nullable
-	private Proxy proxy;
+	private Proxy proxy; // java.net.proxy
 
-	private boolean bufferRequestBody = true;
+	private boolean bufferRequestBody = true; // 默認會緩衝 body
 
 	private int chunkSize = DEFAULT_CHUNK_SIZE;
 
+	// URLConnection's connect timeout (in milliseounds).
+	// 若為0, 表示永不超時
 	private int connectTimeout = -1;
 
+	// 超時規則, 同上
 	private int readTimeout = -1;
 
+	// set if underlying URLConnection can be set to 'output streaming' mode
 	private boolean outputStreaming = true;
 
+	// 異步的時候需要
 	@Nullable
 	private AsyncListenableTaskExecutor taskExecutor;
 
@@ -148,9 +155,14 @@ public class SimpleClientHttpRequestFactory implements ClientHttpRequestFactory,
 
 	@Override
 	public ClientHttpRequest createRequest(URI uri, HttpMethod httpMethod) throws IOException {
+
+		// 打開一個 HttpURLConnection
 		HttpURLConnection connection = openConnection(uri.toURL(), this.proxy);
+		// 設置超時時間, 請求方法等一些參數到 Connection
 		prepareConnection(connection, httpMethod.name());
 
+		// SimpleBufferingClientHttpRequest 的 execute 方法最終使用的是 connection.connect();
+		// 然後從 connection 中得到響應碼, 響應體
 		if (this.bufferRequestBody) {
 			return new SimpleBufferingClientHttpRequest(connection, this.outputStreaming);
 		} else {
@@ -162,6 +174,7 @@ public class SimpleClientHttpRequestFactory implements ClientHttpRequestFactory,
 	 * {@inheritDoc}
 	 * <p>Setting the {@link #setTaskExecutor taskExecutor} property is required before calling this method.
 	 */
+	// 在線程池裡, 異步完成請求
 	@Override
 	public AsyncClientHttpRequest createAsyncRequest(URI uri, HttpMethod httpMethod) throws IOException {
 		Assert.state(this.taskExecutor != null, "Asynchronous execution requires TaskExecutor to be set");
@@ -230,4 +243,23 @@ public class SimpleClientHttpRequestFactory implements ClientHttpRequestFactory,
 		connection.setRequestMethod(httpMethod);
 	}
 
+	public static void main(String[] args) throws IOException {
+		SimpleClientHttpRequestFactory clientFactory = new SimpleClientHttpRequestFactory();
+
+		// ConnectionTimeout 只有在網路正常的情況下才有效, 因此兩個一般都設置
+		clientFactory.setConnectTimeout(5000); // 建立連接的超時時間 5秒
+		clientFactory.setReadTimeout(5000); // 傳送數據的超時時間 (在網路抖動的時候, 這個參數很有效)
+
+		ClientHttpRequest client = clientFactory.createRequest(URI.create("https://baudy.com"), HttpMethod.GET);
+		// 發送請求
+		ClientHttpResponse response = client.execute();
+		System.out.println(response.getStatusCode());
+		System.out.println(response.getStatusText());
+		System.out.println(response.getHeaders());
+
+		// 返回內容 是個 InputStream
+		byte[] bytes = FileCopyUtils.copyToByteArray(response.getBody());
+		System.out.println(new String(bytes, StandardCharsets.UTF_8)); // 百度首頁的 html
+
+	}
 }
