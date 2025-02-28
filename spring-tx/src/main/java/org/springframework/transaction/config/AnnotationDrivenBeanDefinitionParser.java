@@ -62,6 +62,8 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
 		registerTransactionalEventListenerFactory(parserContext);
 		String mode = element.getAttribute("mode");
+		// 2. 在這裡建立了 InfrastructureAdvisorAutoProxyCreator，其本身是 BeanPostPorcessor，(使用 AopNamespaceUtils)
+		// 也建立了 TransactionAttributeSource ， TransactionInterceptor ， TransactionAttributeSourceAdvisor
 		if ("aspectj".equals(mode)) {
 			// mode="aspectj"
 			registerTransactionAspect(element, parserContext);
@@ -140,6 +142,7 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 				String interceptorName = parserContext.getReaderContext().registerWithGeneratedName(interceptorDef);
 
 				// Create the TransactionAttributeSourceAdvisor definition.
+				// 4. 透過 BeanFactoryTransactionAttributeSourceAdvisor 的 TransactionAttributeSourcePointcut 切入點的 matches 方法中進行解析方法上的 @Transactional 來決定是否要增強。
 				RootBeanDefinition advisorDef = new RootBeanDefinition(BeanFactoryTransactionAttributeSourceAdvisor.class);
 				advisorDef.setSource(eleSource);
 				advisorDef.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);

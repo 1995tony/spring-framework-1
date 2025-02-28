@@ -34,6 +34,9 @@ import org.springframework.lang.Nullable;
 @SuppressWarnings("serial")
 public class BeanFactoryTransactionAttributeSourceAdvisor extends AbstractBeanFactoryPointcutAdvisor {
 
+	// 5. 應該為 AnnotationTransactionAttributeSource,
+	// 透過其 getTransactionAttribute 來解析, 內部透過 SpringTransactionAnnotationParser#parseTransactionAnnotation 來解析方法上的@Transactional，
+	// 如果方法上沒有就去類別上找，或是去父類別的方法和類別上找。
 	@Nullable
 	private TransactionAttributeSource transactionAttributeSource;
 

@@ -27,6 +27,8 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  * @since 2.0.7
  */
+// 3. 在實力化的過程中, 使用 InfrastructureAdvisorAutoProxyCreator#postProcessAfterInitialization
+// 來解析 Bean 是否有 @Transational，從而判斷是否要進行增強建立代理程式
 @SuppressWarnings("serial")
 public class InfrastructureAdvisorAutoProxyCreator extends AbstractAdvisorAutoProxyCreator {
 

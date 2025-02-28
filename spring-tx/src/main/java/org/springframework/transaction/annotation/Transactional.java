@@ -80,6 +80,7 @@ public @interface Transactional {
 	 * @see #value
 	 * @since 4.2
 	 */
+	// 在有多個數據源時, 可以指定該 transactionManager 的 Bean Name, 可以寫 @Transactional(transactionManager = "xxManager") 或 @Transactional(value = "xxManager") 為 alias 或 @Transactional("xxManager")	為前一個的縮寫
 	@AliasFor("value")
 	String transactionManager() default "";
 
@@ -89,6 +90,7 @@ public @interface Transactional {
 	 *
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getPropagationBehavior()
 	 */
+	// 指定傳播類型
 	Propagation propagation() default Propagation.REQUIRED;
 
 	/**
@@ -104,6 +106,7 @@ public @interface Transactional {
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getIsolationLevel()
 	 * @see org.springframework.transaction.support.AbstractPlatformTransactionManager#setValidateExistingTransaction
 	 */
+	// 隔離級別
 	Isolation isolation() default Isolation.DEFAULT;
 
 	/**
@@ -115,6 +118,7 @@ public @interface Transactional {
 	 *
 	 * @see org.springframework.transaction.interceptor.TransactionAttribute#getTimeout()
 	 */
+	// timeout, 通常與 REQUIRED, REQUIRES_NEW 一起使用, 因為他僅適用於新啟動的事物
 	int timeout() default TransactionDefinition.TIMEOUT_DEFAULT;
 
 	/**
