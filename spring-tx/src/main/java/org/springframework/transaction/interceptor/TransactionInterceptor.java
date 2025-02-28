@@ -50,6 +50,8 @@ import org.springframework.transaction.TransactionManager;
  * @see org.springframework.aop.framework.ProxyFactoryBean
  * @see org.springframework.aop.framework.ProxyFactory
  */
+// TransactionAspectSupport 這裡應該算是實際執行 rollback, commit 的地方,
+// PlatformTransactionManager 算是定義 commit, rollback 實際上要做啥, 給 JPA等資料庫實現
 @SuppressWarnings("serial")
 public class TransactionInterceptor extends TransactionAspectSupport implements MethodInterceptor, Serializable {
 
