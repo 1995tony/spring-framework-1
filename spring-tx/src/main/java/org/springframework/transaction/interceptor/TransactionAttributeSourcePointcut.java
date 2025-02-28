@@ -34,6 +34,7 @@ import org.springframework.util.ObjectUtils;
  * @since 2.5.5
  */
 @SuppressWarnings("serial")
+// 用於查找 @Transactional 註解
 abstract class TransactionAttributeSourcePointcut extends StaticMethodMatcherPointcut implements Serializable {
 
 	protected TransactionAttributeSourcePointcut() {
@@ -43,6 +44,9 @@ abstract class TransactionAttributeSourcePointcut extends StaticMethodMatcherPoi
 
 	@Override
 	public boolean matches(Method method, Class<?> targetClass) {
+		// 會先通過類名和方法名稱建一個 key, 從緩存中 attributeCache 獲取 TransactionAttribute,
+		// 若找不到就通過 AbstractFallbackTransactionAttributeSource 去解析當前 Method 的 @Transactional 封裝成 TransactionAttribute
+		// 源碼看 AbstractFallbackTransactionAttributeSource#getTransactionAttribute
 		TransactionAttributeSource tas = getTransactionAttributeSource();
 		return (tas == null || tas.getTransactionAttribute(method, targetClass) != null);
 	}

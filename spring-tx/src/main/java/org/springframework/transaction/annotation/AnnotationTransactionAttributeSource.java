@@ -52,6 +52,12 @@ import org.springframework.util.ClassUtils;
  * @see org.springframework.transaction.interceptor.TransactionProxyFactoryBean#setTransactionAttributeSource
  * @since 1.2
  */
+// 是專門用於 Transaction 的屬性解析, 轉換為 TransactionAttribute, 讓 TransactionInterceptor 根據屬性決定事務的行為
+// 像是 @Cacheable、@CachePut 使用 SpringCacheAnnotationParser
+//	 @Scheduled 使用 ScheduledAnnotationBeanPostProcessor
+//	 @EventListener 使用 EventListenerMethodProcessor
+//	 @RequestMapping 使用 RequestMappingHandlerMapping
+//	 @Value 使用 AutowiredAnnotationBeanPostProcessor
 @SuppressWarnings("serial")
 public class AnnotationTransactionAttributeSource extends AbstractFallbackTransactionAttributeSource
 		implements Serializable {
@@ -176,6 +182,7 @@ public class AnnotationTransactionAttributeSource extends AbstractFallbackTransa
 	@Nullable
 	protected TransactionAttribute determineTransactionAttribute(AnnotatedElement element) {
 		for (TransactionAnnotationParser parser : this.annotationParsers) {
+			// 委託 TransactionAnnotationParser<SpringTransactionAnnotationParser> 去解析事務註解
 			TransactionAttribute attr = parser.parseTransactionAnnotation(element);
 			if (attr != null) {
 				return attr;

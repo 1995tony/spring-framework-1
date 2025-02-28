@@ -859,6 +859,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 										Mono.just(it),
 										txInfo -> {
 											try {
+												// 這裡會執行你的方法, 並在事務範圍內處理
 												return (Mono<?>) invocation.proceedWithInvocation();
 											} catch (Throwable ex) {
 												return Mono.error(ex);
